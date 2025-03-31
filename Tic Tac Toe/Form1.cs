@@ -15,6 +15,7 @@ namespace Tic_Tac_Toe
     {
         // Текущий игрок: 1 - крестики, 2 - нолики
         int player = 1;
+        Random random = new Random();
         int loc_x = 120;
         int loc_y = 50;
 
@@ -98,8 +99,23 @@ namespace Tic_Tac_Toe
             // Если игра окончена, ходы не обрабатываем
             if (gameOver) return;
 
+            //// Ход компьютера
+            //if (player == 2)
+            //{
+            //    int row_random = random.Next(0, 3);
+            //    int col_random = random.Next(0, 3);
+
+            //    MessageBox.Show(row_random + " : " + col_random);
+            //}
+
+
             PictureBox picture = sender as PictureBox;
-            
+
+
+            string cell = "01";
+
+            MessageBox.Show(cell[0] + " : " + cell[1]);
+
             if (picture.Tag.ToString() != "empty")
                 return;
 
@@ -138,6 +154,56 @@ namespace Tic_Tac_Toe
 
             // Смена игрока
             player = (player == 1) ? 2 : 1;
+
+            Move_PC();
+        }
+
+        private void Move_PC()
+        {
+
+            int row_random = 0;
+            int col_random = 0;
+            bool key = true; // true проверка осуществляется, false  проверка прекращается
+            // Если клетка свободна
+            while (key == true)
+            {
+                row_random = random.Next(0, 3);
+                col_random = random.Next(0, 3); 
+
+                if (field[row_random, col_random] == 0)
+                {
+                    MessageBox.Show(row_random + " : " + col_random);
+                    field[row_random, col_random] = 2;
+                    pictures[row_random, col_random].Tag = "O";
+                    pictures[row_random, col_random].Image = player == 1 ? Properties.Resources.Крестик : Properties.Resources.Нолик;
+                    // Смена игрока
+                    player = (player == 1) ? 2 : 1;
+                    key = false;
+
+
+
+                    // Проверка победы или ничьей
+                    int winner = CheckWin();
+                    if (winner != 0)
+                    {
+                        resultLabel.Text = $"Победил {(winner == 1 ? "крестик" : "нолик")}!";
+                        PaintWinSet();
+                        EndGame();
+                        return;
+                    }
+                    else if (IsBoardFull())
+                    {
+                        resultLabel.Text = "Ничья!";
+                        EndGame();
+
+                        return;
+                    }
+                }
+            }
+
+
+           
+
         }
 
         // Проверка заполненности игрового поля (для ничьей)
