@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -32,6 +33,9 @@ namespace Tic_Tac_Toe
         Button restartButton;
         int[,] win_stack = new int[3, 3];
         PictureBox[,] pictures = new PictureBox[3, 3];
+        bool chance_win = false; // шанс выигрыша
+        string position = "";
+        int count = 0;
         public Form1()
         {
             InitializeComponent();
@@ -112,9 +116,9 @@ namespace Tic_Tac_Toe
             PictureBox picture = sender as PictureBox;
 
 
-            string cell = "01";
+           
 
-            MessageBox.Show(cell[0] + " : " + cell[1]);
+            
 
             if (picture.Tag.ToString() != "empty")
                 return;
@@ -167,8 +171,21 @@ namespace Tic_Tac_Toe
             // Если клетка свободна
             while (key == true)
             {
-                row_random = random.Next(0, 3);
-                col_random = random.Next(0, 3); 
+                chance_win = PreventWin();
+
+                if (chance_win == true)
+                {
+                    row_random = Convert.ToInt32(position[0].ToString());
+                    col_random = Convert.ToInt32(position[1].ToString());
+                    MessageBox.Show(row_random + " : " + col_random);
+                }
+                else
+                {
+                  
+                    row_random = random.Next(1, 3);
+                    col_random = random.Next(1, 3);
+                    
+                }
 
                 if (field[row_random, col_random] == 0)
                 {
@@ -202,7 +219,7 @@ namespace Tic_Tac_Toe
             }
 
 
-           
+            
 
         }
 
@@ -248,7 +265,44 @@ namespace Tic_Tac_Toe
             if (field[0, 2] != 0 && field[0, 2] == field[1, 1] && field[1, 1] == field[2, 0])
                 return field[0, 2];
 
+            
+
             return 0; // Победителя нет
+
+
+        }
+
+
+        private bool PreventWin()
+        {
+            bool res = false;
+            // Проверка строк
+            for (int i = 0; i < 3; i++)
+            {
+                count = 0;
+
+                for (int j = 0; j < 3; j++)
+                {
+                    if (field[i, j] == 1)
+                    {
+                        count += 1;
+                    }
+
+                    else if (field[i, j] == 0)
+                    {
+                        position = i.ToString() + j.ToString();
+                    }
+                }
+
+                if (count == 2)
+                {
+                  
+                    res = true;
+                    return res;
+                }
+
+            }
+            return res;
         }
 
         private void PaintWinSet()
