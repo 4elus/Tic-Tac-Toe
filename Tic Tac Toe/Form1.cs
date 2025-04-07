@@ -4,18 +4,18 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Tic_Tac_Toe
 {
-
     public partial class Form1 : Form
     {
+        bool start_game = false;
         // Текущий игрок: 1 - крестики, 2 - нолики
         int player = 1;
+        int computer = 2;
         Random random = new Random();
         int loc_x = 120;
         int loc_y = 50;
@@ -36,6 +36,7 @@ namespace Tic_Tac_Toe
         bool chance_win = false; // шанс выигрыша
         string position = "";
         int count = 0;
+
         public Form1()
         {
             InitializeComponent();
@@ -63,7 +64,7 @@ namespace Tic_Tac_Toe
                     picture.SizeMode = PictureBoxSizeMode.Zoom;
                     pictures[i, j] = picture;
                     this.Controls.Add(pictures[i, j]);
-                   
+
                     loc_x += 121;
                 }
                 loc_y += 114;
@@ -100,43 +101,94 @@ namespace Tic_Tac_Toe
 
         private void PictureBoxClick(object sender, EventArgs e)
         {
-            // Если игра окончена, ходы не обрабатываем
+            if (start_game)
+            {
+                // Если игра окончена, ходы не обрабатываем
+                if (gameOver) return;
+
+                PictureBox picture = sender as PictureBox;
+
+                if (picture.Tag.ToString() != "empty")
+                    return;
+
+                // Устанавливаем картинку в зависимости от игрока
+                picture.Image = player == 1 ? Properties.Resources.Крестик : Properties.Resources.Нолик;
+                int row = Convert.ToInt32(picture.Name[10].ToString());
+                int col = Convert.ToInt32(picture.Name[11].ToString());
+
+                if (player == 1)
+                {
+                    picture.Tag = "X";
+                    field[row, col] = player;
+                }
+                else
+                {
+                    picture.Tag = "O";
+                    field[row, col] = computer;
+                }
+
+                // Проверка победы или ничьей
+                int winner = CheckWin();
+                if (winner != 0)
+                {
+                    resultLabel.Text = $"Победил {(winner == 1 ? "крестик" : "нолик")}!";
+                    PaintWinSet();
+                    EndGame();
+                    return;
+                }
+                else if (IsBoardFull())
+                {
+                    resultLabel.Text = "Ничья!";
+                    EndGame();
+                    return;
+                }
+
+                // Смена игрока
+                player = (player == 1) ? 2 : 1;
+
+                if (player == 2) // Ход компьютера (ИИ)
+                {
+                    Move_PC();
+                }
+            }
+        }
+
+        // Измененный метод для хода ИИ, чтобы ИИ ходил один раз
+        private void Move_PC()
+        {
+            // Пока ходит ИИ, мы не хотим выполнять другие действия
             if (gameOver) return;
 
-            //// Ход компьютера
-            //if (player == 2)
-            //{
-            //    int row_random = random.Next(0, 3);
-            //    int col_random = random.Next(0, 3);
+            int row_random = 0;
+            int col_random = 0;
+            bool key = true; // true — проверка осуществляется, false — проверка прекращается
 
-            //    MessageBox.Show(row_random + " : " + col_random);
-            //}
-
-
-            PictureBox picture = sender as PictureBox;
-
-
-           
-
-            
-
-            if (picture.Tag.ToString() != "empty")
-                return;
-
-            // Устанавливаем картинку в зависимости от игрока
-            picture.Image = player == 1 ? Properties.Resources.Крестик : Properties.Resources.Нолик;
-            int row = Convert.ToInt32(picture.Name[10].ToString());
-            int col = Convert.ToInt32(picture.Name[11].ToString());
-
-            if (player == 1)
+            // Если компьютер может выиграть, он будет играть для победы
+            while (key == true)
             {
-                picture.Tag = "X";
-                field[row, col] = 1;
-            }
-            else
-            {
-                picture.Tag = "O";
-                field[row, col] = 2;
+                chance_win = PreventWin();
+                if (chance_win == true)
+                {
+                    row_random = Convert.ToInt32(position[0].ToString());
+                    col_random = Convert.ToInt32(position[1].ToString());
+                    field[row_random, col_random] = 2;
+                    pictures[row_random, col_random].Tag = "O";
+                    pictures[row_random, col_random].Image = Properties.Resources.Нолик;
+                    key = false;
+                    break;
+                }
+
+                // Если клетка свободна, компьютер выбирает случайную клетку
+                row_random = random.Next(0, 3);
+                col_random = random.Next(0, 3);
+
+                if (field[row_random, col_random] == 0)
+                {
+                    field[row_random, col_random] = 2;
+                    pictures[row_random, col_random].Tag = "O";
+                    pictures[row_random, col_random].Image = Properties.Resources.Нолик;
+                    key = false;
+                }
             }
 
             // Проверка победы или ничьей
@@ -152,76 +204,117 @@ namespace Tic_Tac_Toe
             {
                 resultLabel.Text = "Ничья!";
                 EndGame();
-                
                 return;
             }
 
-            // Смена игрока
-            player = (player == 1) ? 2 : 1;
-
-            Move_PC();
+            player = 1; // Возврат хода игроку
         }
 
-        private void Move_PC()
+
+        private bool PreventWin()
         {
+            bool res = false;
 
-            int row_random = 0;
-            int col_random = 0;
-            bool key = true; // true проверка осуществляется, false  проверка прекращается
-            // Если клетка свободна
-            while (key == true)
+            // проверка главной диагонали
+            count = 0;
+            position = "";
+            for (int i = 0; i < 3; i++)
             {
-                chance_win = PreventWin();
-
-                if (chance_win == true)
+                if (field[i, i] == 1)
                 {
-                    row_random = Convert.ToInt32(position[0].ToString());
-                    col_random = Convert.ToInt32(position[1].ToString());
-                    MessageBox.Show(row_random + " : " + col_random);
+                    count++;
                 }
-                else
+                else if (field[i, i] == 0) // Пустая клетка
                 {
-                  
-                    row_random = random.Next(1, 3);
-                    col_random = random.Next(1, 3);
-                    
+                    position = i.ToString() + i.ToString();
                 }
-
-                if (field[row_random, col_random] == 0)
-                {
-                    MessageBox.Show(row_random + " : " + col_random);
-                    field[row_random, col_random] = 2;
-                    pictures[row_random, col_random].Tag = "O";
-                    pictures[row_random, col_random].Image = player == 1 ? Properties.Resources.Крестик : Properties.Resources.Нолик;
-                    // Смена игрока
-                    player = (player == 1) ? 2 : 1;
-                    key = false;
-
-
-
-                    // Проверка победы или ничьей
-                    int winner = CheckWin();
-                    if (winner != 0)
-                    {
-                        resultLabel.Text = $"Победил {(winner == 1 ? "крестик" : "нолик")}!";
-                        PaintWinSet();
-                        EndGame();
-                        return;
-                    }
-                    else if (IsBoardFull())
-                    {
-                        resultLabel.Text = "Ничья!";
-                        EndGame();
-
-                        return;
-                    }
-                }
+            }
+            // Если два крестика в строке и есть пустая клетка
+            if (count == 2 && position != "")
+            {
+                res = true;
+                return res; // Блокируем победу крестиков
             }
 
 
-            
+            // проверка побочной диагонали
+            count = 0;
+            position = "";
+            int k = 2;
+            for (int i = 0; i < 3; i++)
+            {
+                if (field[i, k] == 1)
+                {
+                    count++;
+                }
+                else if (field[i, k] == 0) // Пустая клетка
+                {
+                    position = i.ToString() + k.ToString();
+                }
+                k--;
+            }
+            // Если два крестика в строке и есть пустая клетка
+            if (count == 2 && position != "")
+            {
+                res = true;
+                return res; // Блокируем победу крестиков
+            }
 
+            // Проверка строк на блокирование
+            for (int i = 0; i < 3; i++)
+            {
+                count = 0;
+                position = "";
+                for (int j = 0; j < 3; j++)
+                {
+                    if (field[i, j] == 1) // Крестик
+                    {
+                        count++;
+                    }
+                    else if (field[i, j] == 0) // Пустая клетка
+                    {
+                        position = i.ToString() + j.ToString();
+                    }
+                }
+
+                // Если два крестика в строке и есть пустая клетка
+                if (count == 2 && position != "")
+                {
+                    res = true;
+                    return res; // Блокируем победу крестиков
+                }
+            }
+
+            // Проверка столбцов на блокирование
+            for (int j = 0; j < 3; j++)
+            {
+                count = 0;
+                position = "";
+                for (int i = 0; i < 3; i++)
+                {
+                    if (field[i, j] == 1) // Крестик
+                    {
+                        count++;
+                    }
+                    else if (field[i, j] == 0) // Пустая клетка
+                    {
+                        position = i.ToString() + j.ToString();
+                    }
+                }
+
+                // Если два крестика в столбце и есть пустая клетка
+                if (count == 2 && position != "")
+                {
+                    res = true;
+                    return res; // Блокируем победу крестиков
+                }
+            }
+
+           
+
+            return res;
         }
+
 
         // Проверка заполненности игрового поля (для ничьей)
         private bool IsBoardFull()
@@ -242,74 +335,60 @@ namespace Tic_Tac_Toe
             {
                 if (field[i, 0] != 0 && field[i, 0] == field[i, 1] && field[i, 1] == field[i, 2])
                 {
-                    win_stack[i, 0] = 1;
-                    win_stack[i, 1] = 1;
-                    win_stack[i, 2] = 1;
+                    win_stack[i, 0] = player;
+                    win_stack[i, 1] = player;
+                    win_stack[i, 2] = player;
                     return field[i, 0];
                 }
-                   
             }
+
             // Проверка столбцов
             for (int j = 0; j < 3; j++)
             {
                 if (field[0, j] != 0 && field[0, j] == field[1, j] && field[1, j] == field[2, j])
                 {
-                   
+                    win_stack[0, j] = 1;
+                    win_stack[1, j] = 1;
+                    win_stack[2, j] = 1;
                     return field[0, j];
                 }
-                    
             }
+
             // Проверка диагоналей
             if (field[0, 0] != 0 && field[0, 0] == field[1, 1] && field[1, 1] == field[2, 2])
+            {
+                win_stack[0, 0] = 1;
+                win_stack[1, 1] = 1;
+                win_stack[2, 2] = 1;
                 return field[0, 0];
-            if (field[0, 2] != 0 && field[0, 2] == field[1, 1] && field[1, 1] == field[2, 0])
-                return field[0, 2];
+            }
 
-            
+            if (field[0, 2] != 0 && field[0, 2] == field[1, 1] && field[1, 1] == field[2, 0])
+            {
+                win_stack[0, 2] = 1;
+                win_stack[1, 1] = 1;
+                win_stack[2, 0] = 1;
+                return field[0, 2];
+            }
 
             return 0; // Победителя нет
-
-
-        }
-
-
-        private bool PreventWin()
-        {
-            bool res = false;
-            // Проверка строк
-            for (int i = 0; i < 3; i++)
-            {
-                count = 0;
-
-                for (int j = 0; j < 3; j++)
-                {
-                    if (field[i, j] == 1)
-                    {
-                        count += 1;
-                    }
-
-                    else if (field[i, j] == 0)
-                    {
-                        position = i.ToString() + j.ToString();
-                    }
-                }
-
-                if (count == 2)
-                {
-                  
-                    res = true;
-                    return res;
-                }
-
-            }
-            return res;
         }
 
         private void PaintWinSet()
         {
-            for (int i = 0; i <= win_stack.GetUpperBound(0); i++)
+            // Сброс всех подсветок перед новой игрой
+            foreach (Control control in this.Controls)
             {
-                for (int j = 0; j <= win_stack.GetUpperBound(0); j++)
+                if (control is PictureBox picture)
+                {
+                    picture.BackColor = Color.Transparent;
+                }
+            }
+
+            // Подсветка победивших клеток
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
                 {
                     if (win_stack[i, j] == 1)
                     {
@@ -319,39 +398,51 @@ namespace Tic_Tac_Toe
             }
         }
 
-        // Завершает игру, запрещая дальнейшие ходы и отображая кнопку рестарта
         private void EndGame()
         {
-            gameOver = true;
+            // Включаем кнопку рестарта после окончания игры
             restartButton.Visible = true;
+            gameOver = true;
         }
 
-        // Обработчик кнопки рестарта
         private void RestartButton_Click(object sender, EventArgs e)
         {
-            ResetGame();
-        }
-
-        // Сброс игры до начального состояния
-        private void ResetGame()
-        {
-            player = 1;
-            loc_x = 120;
-            loc_y = 50;
-            gameOver = false;
-            field = new int[3, 3];
-            resultLabel.Text = "";
-            restartButton.Visible = false;
-
-            // Перебираем все контролы и сбрасываем PictureBox
+            // Сбрасываем поле и все настройки для новой игры
+            Array.Clear(field, 0, field.Length);
+            Array.Clear(win_stack, 0, win_stack.Length);
             foreach (Control control in this.Controls)
             {
                 if (control is PictureBox picture)
                 {
                     picture.Image = Properties.Resources.template;
                     picture.Tag = "empty";
+                    picture.BackColor = Color.Transparent;
                 }
             }
+            resultLabel.Text = "";
+            restartButton.Visible = false;
+            player = 1;
+            gameOver = false;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            start_game = true;
+            if (comboBox1.Text == "Нолик")
+            {
+                player = 2;
+            }
+            else
+            {
+                player = 1;
+                computer = 2;
+            }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            MessageBox.Show("Вы выбрали - " + comboBox1.Text);
         }
     }
 }
+
