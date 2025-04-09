@@ -19,7 +19,9 @@ namespace Tic_Tac_Toe
         Random random = new Random();
         int loc_x = 120;
         int loc_y = 50;
-
+        Image image = null;
+        string symbol = null;
+        bool turn = true; // true очередь игрока / false очередь компьютера
         // Флаг окончания игры
         bool gameOver = false;
 
@@ -119,12 +121,12 @@ namespace Tic_Tac_Toe
                 if (player == 1)
                 {
                     picture.Tag = "X";
-                    field[row, col] = player;
+                    field[row, col] = 1;
                 }
                 else
                 {
                     picture.Tag = "O";
-                    field[row, col] = computer;
+                    field[row, col] = 2;
                 }
 
                 // Проверка победы или ничьей
@@ -143,12 +145,14 @@ namespace Tic_Tac_Toe
                     return;
                 }
 
-                // Смена игрока
-                player = (player == 1) ? 2 : 1;
-
-                if (player == 2) // Ход компьютера (ИИ)
+                if (turn)
                 {
+                    turn = false;
                     Move_PC();
+                }
+                else
+                {
+                    turn = true;
                 }
             }
         }
@@ -171,9 +175,9 @@ namespace Tic_Tac_Toe
                 {
                     row_random = Convert.ToInt32(position[0].ToString());
                     col_random = Convert.ToInt32(position[1].ToString());
-                    field[row_random, col_random] = 2;
-                    pictures[row_random, col_random].Tag = "O";
-                    pictures[row_random, col_random].Image = Properties.Resources.Нолик;
+                    field[row_random, col_random] = computer;
+                    pictures[row_random, col_random].Tag = symbol;
+                    pictures[row_random, col_random].Image = image;
                     key = false;
                     break;
                 }
@@ -184,9 +188,9 @@ namespace Tic_Tac_Toe
 
                 if (field[row_random, col_random] == 0)
                 {
-                    field[row_random, col_random] = 2;
-                    pictures[row_random, col_random].Tag = "O";
-                    pictures[row_random, col_random].Image = Properties.Resources.Нолик;
+                    field[row_random, col_random] = computer;
+                    pictures[row_random, col_random].Tag = symbol;
+                    pictures[row_random, col_random].Image = image; // Change
                     key = false;
                 }
             }
@@ -207,7 +211,16 @@ namespace Tic_Tac_Toe
                 return;
             }
 
-            player = 1; // Возврат хода игроку
+
+            if (turn)
+            {
+                turn = false;
+            }
+            else
+            {
+                turn = true;
+            }
+
         }
 
 
@@ -431,11 +444,19 @@ namespace Tic_Tac_Toe
             if (comboBox1.Text == "Нолик")
             {
                 player = 2;
+                turn = false;
+                computer = 1;
+                image = Properties.Resources.Крестик;
+                symbol = "X";
+                Move_PC();
             }
             else
             {
                 player = 1;
+                turn = true;
                 computer = 2;
+                image = Properties.Resources.Нолик;
+                symbol = "O";
             }
         }
 
