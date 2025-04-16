@@ -323,7 +323,7 @@ namespace Tic_Tac_Toe
                 }
             }
 
-           
+
 
             return res;
         }
@@ -434,13 +434,32 @@ namespace Tic_Tac_Toe
             }
             resultLabel.Text = "";
             restartButton.Visible = false;
-            player = 1;
             gameOver = false;
+            start_game = true;
+            button1.Enabled = true;
+            if (comboBox1.Text == "Нолик")
+            {
+                player = 2;
+                turn = false;
+                computer = 1;
+                image = Properties.Resources.Крестик;
+                symbol = "X";
+                Move_PC();
+            }
+            else
+            {
+                player = 1;
+                turn = true;
+                computer = 2;
+                image = Properties.Resources.Нолик;
+                symbol = "O";
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             start_game = true;
+            button1.Enabled = false;
             if (comboBox1.Text == "Нолик")
             {
                 player = 2;
@@ -462,7 +481,7 @@ namespace Tic_Tac_Toe
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            MessageBox.Show("Вы выбрали - " + comboBox1.Text);
+
         }
     }
 }
